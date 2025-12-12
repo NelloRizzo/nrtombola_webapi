@@ -16,8 +16,8 @@ export const AppDataSource = new DataSource({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     synchronize: true, // Solo per sviluppo
-    logging: true,
+    logging: false,
     entities: [User, Role, Game, CalledNumber, Card],
     subscribers: [],
-    migrations: [],
+    migrations: []
 });

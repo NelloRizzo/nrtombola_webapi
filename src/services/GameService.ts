@@ -50,7 +50,7 @@ export class GameService {
     async startGame(userId: number, gameId: number): Promise<any> {
         try {
 
-            const game = await this.gameRepository.findById(gameId);
+            const game = await this.gameRepository.findById(gameId, ['owner']);
             if (!game) {
                 return { success: false, error: 'Game not found' };
             }
@@ -82,7 +82,7 @@ export class GameService {
     // Terminare una partita (solo 'caller' e proprietario)
     async endGame(userId: number, gameId: number): Promise<any> {
         try {
-            const game = await this.gameRepository.findById(gameId);
+            const game = await this.gameRepository.findById(gameId, ['owner']);
             if (!game) {
                 return { success: false, error: 'Game not found' };
             }
@@ -115,7 +115,7 @@ export class GameService {
     async drawNumber(userId: number, gameId: number, number: number): Promise<any> {
         try {
             const game = await this.gameRepository.findById(gameId, ['owner']);
-            console.log("drawNumber", game)
+
             if (!game) {
                 return { success: false, error: 'Game not found' };
             }
