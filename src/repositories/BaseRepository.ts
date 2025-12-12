@@ -20,8 +20,7 @@ export abstract class BaseRepository<T extends Base> {
     // READ
     async findById(id: number, relations?: string[]): Promise<T | null> {
         const options: FindOneOptions<T> = {
-            where: { id } as FindOptionsWhere<T>,
-            relations: ['owner']
+            where: { id } as FindOptionsWhere<T>
         };
 
         if (relations?.length) {

@@ -16,6 +16,7 @@ export class AuthService {
         this.roleRepository = new RoleRepository();
         this.userRoleRepository = new UserRoleRepository();
         this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+        console.log("AuthService", this.jwtSecret)
     }
 
     async registerUser(data: {
@@ -244,6 +245,7 @@ export class AuthService {
 
             // Verifica che l'utente esista ancora
             const user = await this.userRepository.findById(decoded.userId);
+            console.log("verifyToken",user)
             if (!user) {
                 return {
                     success: false,

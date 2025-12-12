@@ -4,6 +4,7 @@ import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import { Game } from '../entities/Game';
 import { CalledNumber } from '../entities/CalledNumber';
+import { Card } from '../entities/Card';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_DATABASE,
     synchronize: true, // Solo per sviluppo
     logging: true,
-    entities: [User, Role, Game, CalledNumber],
+    entities: [User, Role, Game, CalledNumber, Card],
     subscribers: [],
     migrations: [],
 });

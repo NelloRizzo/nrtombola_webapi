@@ -2,6 +2,8 @@
 import { GameRepository } from '../repositories/GameRepository';
 import { CalledNumberRepository } from '../repositories/CalledNumberRepository';
 import { UserRepository } from '../repositories/UserRepository';
+import { CardRepositoryInstance } from '../repositories/CardRepository';
+import { CardEvaluationService, WinLevel } from './CardEvaluationService';
 
 export class GameService {
     private gameRepository: GameRepository;
@@ -112,7 +114,8 @@ export class GameService {
     // Estrarre un numero (solo 'caller' e proprietario)
     async drawNumber(userId: number, gameId: number, number: number): Promise<any> {
         try {
-            const game = await this.gameRepository.findById(gameId);
+            const game = await this.gameRepository.findById(gameId, ['owner']);
+            console.log("drawNumber", game)
             if (!game) {
                 return { success: false, error: 'Game not found' };
             }
@@ -165,7 +168,7 @@ export class GameService {
     // Estrarre un numero casuale non ancora estratto
     async drawRandomNumber(userId: number, gameId: number): Promise<any> {
         try {
-            const game = await this.gameRepository.findById(gameId);
+            const game = await this.gameRepository.findById(gameId, ['owner']);
             if (!game) {
                 return { success: false, error: 'Game not found' };
             }
@@ -283,7 +286,7 @@ export class GameService {
                     endedAt: game.endedAt,
                     isActive: !game.endedAt && !!game.startedAt,
                     totalNumbersDrawn: drawnNumbers.length,
-                    drawnNumbers: drawnNumbers.sort((a, b) => a - b),
+                    drawnNumbers: drawnNumbers,
                     lastDraw: calledNumbers.length > 0
                         ? calledNumbers[calledNumbers.length - 1]
                         : null
@@ -337,7 +340,8 @@ export class GameService {
                     startedAt: game.startedAt,
                     endedAt: game.endedAt,
                     isActive: !game.endedAt && !!game.startedAt,
-                    createdAt: game.createdAt
+                    createdAt: game.createdAt,
+                    ownerId: game.owner.id
                 }))
             };
         } catch (error) {
@@ -346,5 +350,20 @@ export class GameService {
                 error: error instanceof Error ? error.message : 'Failed to get user games'
             };
         }
+    }
+
+    // Assumiamo che il gameId sia fornito
+    async checkWinningForGame(gameId: number, cardId: number): Promise<WinLevel> {
+        // 1. Recupera i dati necessari
+        const gameStatus = await this.getGameStatus(gameId); // Funzione che recupera lo stato del gioco
+        const drawnNumbers = gameStatus.drawnNumbers;
+
+        // 2. Recupera la cartella
+        const card = await CardRepositoryInstance.findById(cardId);
+
+        if (card === null) return WinLevel.NONE;
+
+        // 3. Esegui la valutazione
+        return CardEvaluationService.evaluateMaxWin(card, drawnNumbers);
     }
 }

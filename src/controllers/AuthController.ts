@@ -1,6 +1,7 @@
 // src/controllers/AuthController.ts
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
+import { AuthenticatedRequest } from '../middleware/AuthMiddleware';
 
 export class AuthController {
     private authService: AuthService;
@@ -179,30 +180,13 @@ export class AuthController {
     }
 
     // GET /api/auth/me
-    async getCurrentUser(req: Request, res: Response): Promise<void> {
-        try {
-            const token = req.headers.authorization?.split(' ')[1];
-
-            if (!token) {
-                res.status(401).json({
-                    success: false,
-                    error: 'No token provided'
-                });
-                return;
-            }
-
-            const result = await this.authService.verifyToken(token);
-
-            if (result.success) {
-                res.status(200).json(result);
-            } else {
-                res.status(401).json(result);
-            }
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                error: 'Internal server error'
-            });
+    async getCurrentUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+        if (req.user) {
+            // Ritorna le info dell'utente già autenticato
+            res.status(200).json({ success: true, user: req.user });
+        } else {
+            // Non dovrebbe succedere se il middleware è attivo, ma per sicurezza
+            res.status(401).json({ success: false, error: 'Authentication required' });
         }
     }
 }

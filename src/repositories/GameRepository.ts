@@ -11,7 +11,8 @@ export class GameRepository extends BaseRepository<Game> {
     async findByOwner(ownerId: number): Promise<Game[]> {
         return this.repository.find({
             where: { owner: { id: ownerId } },
-            order: { createdAt: 'DESC' }
+            order: { createdAt: 'DESC' },
+            relations: ['owner']
         });
     }
 
@@ -25,6 +26,7 @@ export class GameRepository extends BaseRepository<Game> {
     async findGameWithNumbers(gameId: number): Promise<Game | null> {
         return this.repository.findOne({
             where: { id: gameId },
+            order: { calledNumbers: { createdAt: 'DESC' } },
             relations: ['owner', 'calledNumbers']
         });
     }

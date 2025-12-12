@@ -111,6 +111,9 @@ class App {
         router.get('/games/:gameId/status', (req, res) =>
             gameController.getGameStatus(req, res));
 
+        // Controllo vincite
+        router.get('/games/:gameId/card/:cardId', (req, res) => gameController.checkWinning(req, res));
+
         this.app.use('/api', router);
     }
 

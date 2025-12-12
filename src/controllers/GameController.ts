@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { GameService } from '../services/GameService';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/AuthMiddleware';
+import { WinLevel } from '../services/CardEvaluationService';
 
 export class GameController {
     private gameService: GameService;
@@ -343,5 +344,68 @@ export class GameController {
                 (req: AuthenticatedRequest, res: Response, next: Function) =>
                     controller.isGameStarted(req, res, next)
         };
+    }
+
+    async checkWinning(req: Request, res: Response) {
+
+        // 1. Validazione dei Parametri
+        const gameId = parseInt(req.params.gameId, 10);
+        const cardId = parseInt(req.params.cardId, 10);
+
+        if (isNaN(gameId) || gameId <= 0 || isNaN(cardId) || cardId <= 0) {
+            return res.status(400).json({
+                message: 'Game ID e Card ID devono essere numeri interi positivi validi.'
+            });
+        }
+
+        try {
+            // 2. Chiamata alla logica di business nel GameService
+            const winLevel: WinLevel = await this.gameService.checkWinningForGame(gameId, cardId);
+
+            // 3. Risposta
+            // La risposta restituisce un oggetto che include il livello di vincita
+            // e un messaggio descrittivo.
+
+            let winDescription: string;
+
+            switch (winLevel) {
+                case WinLevel.TOMBOLA:
+                    winDescription = 'TOMBOLA!';
+                    break;
+                case WinLevel.CINQUINA:
+                    winDescription = 'Cinquina';
+                    break;
+                case WinLevel.QUATERNA:
+                    winDescription = 'Quaterna';
+                    break;
+                case WinLevel.TERNO:
+                    winDescription = 'Terno';
+                    break;
+                case WinLevel.AMBO:
+                    winDescription = 'Ambo';
+                    break;
+                default:
+                    winDescription = 'Nessuna Vincita Rilevata';
+                    break;
+            }
+
+            return res.status(200).json({
+                gameId: gameId,
+                cardId: cardId,
+                winLevel: winLevel,
+                winDescription: winDescription,
+                message: `Verifica completata. Livello massimo raggiunto: ${winDescription}`
+            });
+
+        } catch (error) {
+            console.error(`Errore durante la verifica della vincita per Game ${gameId} / Card ${cardId}:`, error);
+
+            // Gestione di errori specifici (es. Partita non trovata)
+            if (error instanceof Error && error.message.includes('GameStatus not found')) {
+                return res.status(404).json({ message: `Partita con ID ${gameId} non trovata.` });
+            }
+
+            return res.status(500).json({ message: 'Errore interno del server durante la valutazione della vincita.' });
+        }
     }
 }

@@ -12,9 +12,9 @@ export class UserRepository extends BaseRepository<User> {
     // METODI SPECIFICI PER USER
     async findByEmail(email: string, withRelations: boolean = false): Promise<User | null> {
         const options: any = { where: { email } };
-        
+
         if (withRelations) {
-            options.relations = ['games', 'roles']; 
+            options.relations = ['games', 'roles'];
         }
 
         return await this.repository.findOne(options);
@@ -40,14 +40,14 @@ export class UserRepository extends BaseRepository<User> {
     }
 
     async updateLastLogin(userId: number): Promise<void> {
-        await this.update(userId, { 
-            lastLoginAt: new Date() 
+        await this.update(userId, {
+            lastLoginAt: new Date()
         } as any);
     }
 
     async deactivateUser(userId: number): Promise<void> {
-        await this.update(userId, { 
-            isActive: false 
+        await this.update(userId, {
+            isActive: false
         } as any);
     }
 

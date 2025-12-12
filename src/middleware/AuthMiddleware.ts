@@ -32,7 +32,7 @@ export const authMiddleware = async (
             return;
         }
 
-        const jwtSecret = process.env.JWT_SECRET || 'default-dev-secret-change-in-production';
+        const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
 
         try {
             const decoded = jwt.verify(token, jwtSecret) as any;
@@ -97,8 +97,8 @@ export const roleMiddleware = (requiredRole: string) => {
 // Middleware combinato auth + role
 export const authWithRole = (requiredRole: string) => {
     return [
-        roleMiddleware(requiredRole),
-        authMiddleware
+        authMiddleware,
+        roleMiddleware(requiredRole)
     ];
 };
 
