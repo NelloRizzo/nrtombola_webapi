@@ -70,12 +70,56 @@ export class CardRepository extends BaseRepository<Card> {
         if (!searchText || searchText.length < 1) {
             return [];
         }
-        
+
         // Usiamo il QueryBuilder per l'operatore ILIKE di PostgreSQL
         return await this.repository.createQueryBuilder('card')
             // ILIKE esegue una ricerca insensibile alle maiuscole/minuscole
             .where('card.name ILIKE :search', { search: `%${searchText}%` })
             .getMany();
+    }
+
+    /**
+     * Recupera le cartelle con supporto per la paginazione e la ricerca per nome.
+     * Utilizza il Query Builder per ottimizzare le query di conteggio e recupero dati.
+     * * @param take Il numero massimo di risultati per pagina (limite).
+     * @param skip Il numero di risultati da saltare (offset).
+     * @param searchTerm La stringa da cercare nel campo 'name' (opzionale).
+     * @returns Una Promise che risolve in una tupla [data: Card[], total: number].
+     */
+    async findPaginatedAndCount(
+        take: number,
+        skip: number,
+        searchTerm?: string
+    ): Promise<[Card[], number]> {
+
+        // 1. Inizializza il Query Builder
+        const queryBuilder = this.repository.createQueryBuilder('card')
+            // Ordina per id per garantire un risultato coerente
+            .orderBy('card.id', 'ASC');
+
+        // 2. Applicare la clausola di ricerca se searchTerm è fornito
+        if (searchTerm) {
+            // NOTA: Usiamo LOWER() e ILIKE/LIKE per una ricerca case-insensitive (dipende dal DB)
+            // Se usi PostgreSQL, ILIKE è ideale; altrimenti, usa LIKE con LOWER().
+            const searchPattern = `%${searchTerm.toLowerCase()}%`;
+
+            queryBuilder.where('LOWER(card.name) LIKE :search', { search: searchPattern });
+        }
+
+        // 3. Eseguire il conteggio totale dei risultati filtrati (senza paginazione)
+        // Questa è la chiave per sapere quante pagine totali ci sono.
+        const total = await queryBuilder.getCount();
+
+        // 4. Applicare la paginazione (skip/take) solo alla query di recupero dati
+        queryBuilder
+            .skip(skip)
+            .take(take);
+
+        // 5. Eseguire la query di recupero dati
+        const data = await queryBuilder.getMany();
+
+        // 6. Restituire i risultati
+        return [data, total];
     }
 }
 

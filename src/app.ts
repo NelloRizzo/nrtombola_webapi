@@ -8,6 +8,7 @@ import { GameController } from './controllers/GameController';
 import { AuthenticatedRequest, authMiddleware, authWithRole } from './middleware/AuthMiddleware';
 import { ParamsDictionary } from 'express-serve-static-core';
 import { ParsedQs } from 'qs';
+import { CardController } from './controllers/CardController';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ class App {
         const router = express.Router();
         const authController = new AuthController();
         const gameController = new GameController();
+        const cardController = new CardController();
 
         // Auth routes (pubbliche)
         router.post('/auth/register', (req, res) => authController.register(req, res));
@@ -113,6 +115,9 @@ class App {
 
         // Controllo vincite
         router.get('/games/:gameId/card/:cardId', (req, res) => gameController.checkWinning(req, res));
+
+        // Elenco cartelle
+        router.get('/cards/', (req, res) => cardController.getPaginatedCards(req, res))
 
         this.app.use('/api', router);
     }

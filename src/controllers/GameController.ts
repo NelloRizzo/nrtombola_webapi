@@ -394,7 +394,7 @@ export class GameController {
                 cardId: cardId,
                 winLevel: winLevel,
                 winDescription: winDescription,
-                message: `Verifica completata. Livello massimo raggiunto: ${winDescription}`
+                message: `Verifica completata. ${winDescription}`
             });
 
         } catch (error) {

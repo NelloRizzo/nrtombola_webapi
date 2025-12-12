@@ -356,7 +356,7 @@ export class GameService {
     async checkWinningForGame(gameId: number, cardId: number): Promise<WinLevel> {
         // 1. Recupera i dati necessari
         const gameStatus = await this.getGameStatus(gameId); // Funzione che recupera lo stato del gioco
-        const drawnNumbers = gameStatus.drawnNumbers;
+        const drawnNumbers = gameStatus.game.drawnNumbers;
 
         // 2. Recupera la cartella
         const card = await CardRepositoryInstance.findById(cardId);

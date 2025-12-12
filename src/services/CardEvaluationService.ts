@@ -1,6 +1,6 @@
 // src/services/CardEvaluationService.ts
 
-import { Card } from '../entities/Card'; 
+import { Card } from '../entities/Card';
 
 /**
  * Mappatura dei valori di vincita (ad esempio, per un'enumerazione o costanti)
@@ -33,78 +33,33 @@ export class CardEvaluationService {
      * @param drawnNumbers L'array di tutti i numeri estratti finora.
      * @returns Il livello di vincita massimo raggiunto (0, 2, 3, 4, 5, 15).
      */
-    public static evaluateMaxWin(card: Card, drawnNumbers: number[]): number {
-        
+    public static evaluateMaxWin(card: Card, drawnNumbers: number[]): WinLevel {
         // Convertiamo l'array dei numeri estratti in un set per un lookup O(1) velocissimo
         const drawnSet = new Set(drawnNumbers);
+
+        // 2. Suddivisione della Cartella in Righe (3 righe da 5 numeri)
+        const rows: number[][] = [];
+        for (let i = 0; i < 15; i += 5) {
+            rows.push(card.cells.slice(i, i + 5));
+        }
+
+        // 3. Logica di Verifica
+        let maxRowMatch = 0; // Massimo match (Ambo=2, Terno=3, Cinquina=5)
+        let totalMatchedNumbers = 0; // Totale match su tutta la cartella (per la Tombola)
         
-        // 1. Tombola check (Vincita massima)
-        let matchedCount = 0;
-        
-        // Contiamo quanti numeri della cartella sono stati estratti
-        for (const cellNumber of card.cells) {
-            if (drawnSet.has(cellNumber)) {
-                matchedCount++;
-            }
-        }
-
-        // Se tutti e 15 i numeri sono stati estratti: TOMBOLA!
-        if (matchedCount === 15) {
-            return WinLevel.TOMBOLA; 
-        }
-
-        // Se non è stata estratta nemmeno una cella, la vincita massima è 0
-        if (matchedCount < 2) {
-            return WinLevel.NONE;
-        }
-
-        // 2. Controllo Ambo, Terno, Quaterna, Cinquina (per riga)
-        // La cartella è composta da 15 numeri nell'ordine di stampa (riga 1, riga 2, riga 3)
-        // I numeri estratti finora (matchedCount) sono almeno 2.
-
-        let maxRowMatch = 0; // Tiene traccia della vincita massima su una riga (2, 3, 4, o 5)
-
-        // Itera attraverso le 3 righe (Row 0: 0-4, Row 1: 5-9, Row 2: 10-14)
-        for (let i = 0; i < 3; i++) {
-            let currentRowMatch = 0;
-            const startIndex = i * 5; // 0, 5, 10
-
-            // Itera sui 5 numeri di questa riga
-            for (let j = 0; j < 5; j++) {
-                const cellNumber = card.cells[startIndex + j];
-
+        // Verifica Cinquina (maxRowMatch)
+        for (const row of rows) {
+            let rowMatchCount = 0;
+            for (const cellNumber of row) {
                 if (drawnSet.has(cellNumber)) {
-                    currentRowMatch++;
+                    rowMatchCount++;
                 }
             }
-
-            // Aggiorna la vincita massima raggiunta su una singola riga
-            if (currentRowMatch > maxRowMatch) {
-                maxRowMatch = currentRowMatch;
-            }
-        }
-        
-        // 3. Restituzione del Livello di Vincita
-        // Il risultato è il max(matchedCount_sulla_riga, 0)
-        
-        // La vincita massima su una riga può essere 5 (Cinquina)
-        if (maxRowMatch >= WinLevel.CINQUINA) {
-            return WinLevel.CINQUINA;
-        }
-        // Quaterna
-        if (maxRowMatch >= WinLevel.QUATERNA) {
-            return WinLevel.QUATERNA;
-        }
-        // Terno
-        if (maxRowMatch >= WinLevel.TERNO) {
-            return WinLevel.TERNO;
-        }
-        // Ambo
-        if (maxRowMatch >= WinLevel.AMBO) {
-            return WinLevel.AMBO;
+            maxRowMatch = Math.max(maxRowMatch, rowMatchCount);
+            totalMatchedNumbers += rowMatchCount;
         }
 
-        // Se non è Tombola e la vincita massima su una riga è 0 o 1
-        return WinLevel.NONE; // 0 o 1 non sono considerate vincite valide (solo Ambo+)
+        // 4. Determinazione del Livello di Vincita e Messaggio
+        return (totalMatchedNumbers === 15) ? 15 : maxRowMatch;
     }
 }
