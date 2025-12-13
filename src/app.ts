@@ -9,8 +9,21 @@ import { AuthenticatedRequest, authMiddleware, authWithRole } from './middleware
 import { ParamsDictionary } from 'express-serve-static-core';
 import { ParsedQs } from 'qs';
 import { CardController } from './controllers/CardController';
+import multer from 'multer';
 
 dotenv.config();
+
+// =========================================================================
+// 🟢 CONFIGURAZIONE MULTER
+// =========================================================================
+
+// Usiamo memoryStorage perché il file è piccolo (XML/Cards) e vogliamo il contenuto
+// (buffer) direttamente in req.file.buffer per passarlo al CardService.
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    // Opzionale: limita la dimensione del file, es. 5MB
+    // limits: { fileSize: 5 * 1024 * 1024 } 
+});
 
 class App {
     private app: express.Application;
@@ -118,7 +131,14 @@ class App {
 
         // Elenco cartelle
         router.get('/cards/', (req, res) => cardController.getPaginatedCards(req, res))
-
+        // POST /api/cards/upload
+        // Il middleware 'upload.single('cardsFile')' gestirà l'upload di un singolo file
+        // con il nome di campo 'cardsFile' e lo renderà disponibile in req.file.buffer
+        router.post(
+            '/cards/upload',
+            upload.single('cardsFile'),
+            cardController.uploadCards
+        );
         this.app.use('/api', router);
     }
 

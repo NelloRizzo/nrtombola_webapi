@@ -126,4 +126,14 @@ export abstract class BaseRepository<T extends Base> {
     getQueryBuilder(alias?: string) {
         return this.repository.createQueryBuilder(alias);
     }
+
+    /**
+     * Svuota completamente la tabella del database associata a questa entità.
+     * Utilizza TRUNCATE TABLE.
+     */
+    async clear(): Promise<void> {
+        // La proprietà queryRunner è accessibile tramite il repository di TypeORM
+        // e permette di eseguire operazioni dirette di DDL/DML.
+        await this.repository.clear(); 
+    }
 }

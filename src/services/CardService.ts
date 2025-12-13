@@ -3,6 +3,7 @@
 import { Card } from '../entities/Card';
 // Importiamo l'istanza del repository che abbiamo creato, non la classe
 import { CardRepositoryInstance } from '../repositories/CardRepository';
+import { parseCardsFromXml } from '../utils/cardImporter';
 
 // --- Tipi di Dati: Necessari per la risposta paginata al frontend ---
 export interface PaginatedResult<T> {
@@ -78,8 +79,31 @@ export class CardService {
         };
     }
 
-    // Il metodo searchCardsByName è stato rimosso poiché la sua funzionalità
-    // è stata inglobata in paginateCards.
+    /**
+      * Gestisce l'upload del file XML, parsa il contenuto e salva le cartelle nel DB.
+      * @param fileContent Contenuto del file XML caricato come stringa.
+      * @param clearExisting Se TRUE, svuota la tabella prima di importare.
+      * @returns Numero di cartelle salvate.
+      */
+    async importCardsFromFile(fileContent: string, clearExisting: boolean = false): Promise<number> {
+
+        if (clearExisting) {
+            console.log('Pulizia tabella Card in corso...');
+            await this.cardRepository.clear();
+        }
+
+        // 1. Parsa il contenuto XML
+        const cardsToSave: Card[] = parseCardsFromXml(fileContent);
+
+        if (cardsToSave.length === 0) {
+            throw new Error('Nessuna cartella valida trovata nel file caricato. Verifica la struttura XML.');
+        }
+
+        // 2. Salva le nuove cartelle
+        await this.cardRepository.saveMany(cardsToSave);
+
+        return cardsToSave.length;
+    }
 
 }
 

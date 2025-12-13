@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { CardService, CardServiceInstance } from "../services/CardService";
 
 // Dimensioni di default per la paginazione, se non specificate dal frontend
@@ -7,6 +7,35 @@ const DEFAULT_PAGE = 1;
 
 export class CardController {
     private cardService: CardService = CardServiceInstance;
+    async uploadCards(req: Request, res: Response, next: NextFunction) {
+
+        // Verifica se il file è stato caricato dal middleware (p. es. Multer)
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).send({ message: 'Nessun file di cartelle caricato.' });
+        }
+
+        try {
+            // Converti il buffer del file in stringa per il parser XML
+            const fileContent = req.file.buffer.toString('utf8');
+
+            // Controlla se l'utente ha richiesto la pulizia (es. da un campo form)
+            const clearExisting = req.body.clearExisting === 'true';
+
+            const savedCount = await CardServiceInstance.importCardsFromFile(
+                fileContent,
+                clearExisting
+            );
+
+            res.status(200).send({
+                message: `✅ Importazione completata. Salvate ${savedCount} cartelle.`,
+                count: savedCount,
+            });
+
+        } catch (error) {
+            console.error('Errore durante l\'upload e l\'importazione:', error);
+            res.status(500).send({ message: 'Errore interno del server durante l\'importazione.' });
+        }
+    }
 
     /**
          * Gestisce la richiesta GET /api/cards.
